@@ -17,9 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from debug_toolbar.toolbar import debug_toolbar_urls
+from django.conf.urls.i18n import i18n_patterns
+from django.utils.translation import gettext_lazy as _
 
 
-urlpatterns = [
-    path("polls/", include("django_polls.urls")),
-    path('admin/', admin.site.urls),   
-] + debug_toolbar_urls()
+urlpatterns = i18n_patterns(
+    path('admin/', admin.site.urls),
+    path("polls/", include("choice_polls.urls")),
+
+    # If no prefix is given, use the default language
+    prefix_default_language=False
+) + debug_toolbar_urls()
+
+admin.site.index_title = _('Welcome to the Polls Admininstration')
+admin.site.site_header = _('Polls Administration')
+admin.site.site_title = _('Polls Management')

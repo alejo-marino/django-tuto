@@ -1,0 +1,2 @@
+recursive-include choice_polls/static *
+recursive-include choice_polls/templates *

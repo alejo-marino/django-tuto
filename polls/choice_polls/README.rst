@@ -1,8 +1,8 @@
 ============
-django-polls
+polls
 ============
 
-django-polls is a Django app to conduct web-based polls. For each
+polls is a Django app to conduct web-based polls. For each
 question, visitors can choose between a fixed number of answers.
 
 Detailed documentation is in the "docs" directory.
@@ -14,12 +14,12 @@ Quick start
 
     INSTALLED_APPS = [
         ...,
-        "django_polls",
+        "polls",
     ]
 
 2. Include the polls URLconf in your project urls.py like this::
 
-    path("polls/", include("django_polls.urls")),
+    path("polls/", include("polls.urls")),
 
 3. Run ``python manage.py migrate`` to create the models.
 
