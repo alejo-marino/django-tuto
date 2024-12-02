@@ -233,6 +233,51 @@ def welcome_translated(language):
 3. Failing 2, it looks at the Accept-Language HTTP header sent by the user's browser. Django tries each of the languages in this header until one matches with the supported LANGUAGES.
 4. Failing all previous options, Django will default to using the LANGUAGE_CODE specified in settings.py
 
+### Summary
+
+If we wanna add a new language, let's say Chinese (cn) to our app, the steps we should follow should be:
+
+1. Add the new language in the settings.py file for our main app:
+```
+LANGUAGES = [
+    ...
+    ('cn', _('Chinese')),
+    ...
+]
+```
+2. Head to the packages' directories we want to translate (in our case /polls)
+3. Execute the following command to create the .po file
+```
+django-admin makemessages -l cn
+```
+4. Fill out the required translated strings
+5. Run the following command to compile the .po file into an .mo file
+```
+./manage.py compilemessages
+```
+6. Head to our project's base directory (in our case /tutorial-site)
+7. Execute the following command to create the .po file (this one's for the files in your app, not the package/s):
+```
+./manage.py makemessages -l cn
+```
+8. Create the symbolic link to the required package that we're looking to also translate:
+```
+ln -s ~/.../polls/choice_polls ./
+```
+9. Copy the contents related to translation files:
+```
+cp -R ./choice_polls/locale/cn ./polls_translation/choice_polls/cn
+```
+10. Compile all translation files:
+```
+./manage.py compilemessages
+```
+11. Remove the symlink and run
+```
+rm ./choice_polls
+./manage.py runserver
+```
+
 ### Useful links to further undestand:
 - Everything related to the translation module: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
 - For more information on how Django gets what language it should display, visit: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#how-django-discovers-language-preference
@@ -455,6 +500,51 @@ def welcome_translated(language):
 2. Si falla el punto 1, busca una cookie (LANGUAGE_COOKIE_NAME), más detalles sobre esto [aqui](https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#language-cookie)
 3. FSi falla el punto 2, busca en el encabezado HTTP Accept-Language enviado por el navegador del usuario. Django prueba cada uno de los idiomas en este encabezado hasta que uno coincide con los idiomas compatibles.
 4. Si fallan todas las opciones anteriores, Django usará el LANGUAGE_CODE especificado en settings.py
+
+### Resumen
+
+Si queremos agregar un nuevo idioma, digamos Chino (cn) a nuestra aplicación, los pasos que debemos seguir son:
+
+1. Agregar el nuevo idioma en el archivo settings.py de nuestra aplicación principal:
+```
+LANGUAGES = [
+    ...
+    ('cn', _('Chino')),
+    ...
+]
+```
+2. Diríjase a los directorios de los paquetes que queremos traducir (en nuestro caso /polls)
+3. Ejecute el siguiente comando para crear el archivo .po
+```
+django-admin makemessages -l cn
+```
+4. Complete el archivo .po con las strings de traduccion
+5. Ejecute el siguiente comando para compilar el archivo .po en un archivo .mo
+```
+./manage.py compilemessages
+```
+6. Diríjase al directorio base de nuestro proyecto (en nuestro caso /tutorial-site)
+7. Ejecute el siguiente comando para crear el archivo .po (este es para los archivos en su aplicación, no los paquetes):
+```
+./manage.py makemessages -l cn
+```
+8. Cree el enlace simbólico al paquete requerido que también estamos buscando traducir:
+```
+ln -s ~/.../polls/choice_polls ./
+```
+9. Copie los contenidos relacionados con los archivos de traducción:
+```
+cp -R ./choice_polls/locale/cn ./polls_translation/choice_polls/cn
+```
+10. Compile todos los archivos de traducción:
+```
+./manage.py compilemessages
+```
+11. Elimine el enlace simbólico y ejecute el servidor
+```
+rm ./choice_polls
+./manage.py runserver
+```
 
 ### Enlaces útiles para entender mejor:
 - Todo lo relacionado con el módulo de traducción: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
