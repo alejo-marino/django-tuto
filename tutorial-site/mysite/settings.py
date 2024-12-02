@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
-    BASE_DIR / 'polls_translation' / 'choice_polls' / 'locale',
+    BASE_DIR / 'polls_translation' / 'choice_polls',
 ]
 
 
@@ -152,7 +152,7 @@ import os
 def debug_gettext():
     locale_paths = [
         BASE_DIR / 'locale',
-        BASE_DIR / 'polls_translation' / 'choice_polls' / 'locale',
+        BASE_DIR / 'polls_translation' / 'choice_polls',
     ]
     for path in locale_paths:
         print(f"Checking locale path: {path}")
