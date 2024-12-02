@@ -43,6 +43,7 @@ def my_view(request):
     output = ("Welcome to my site.")
     return HttpResponse(output)
 ```
+
 All I have to do is identify the text I'd like to translate (translation not only works on static strings, but also on computed valueis or variables) and import gettext_lazy() (most of the times you should be using this instead of gettext()) to do the translation, it's common practice to import this function with the '_' alias but of course it's not mandatory:
 ```
 from django.http import HttpResponse
@@ -67,7 +68,7 @@ Now let's say I want to leave a comment for whoever will translate this, all we 
 ```
 def my_view(request):
     # Translators: This message appears on the home page only
-    output = gettext("Welcome to my site.")
+    output = _("Welcome to my site.")
 ```
 This will let whoever's translating this particular string to see the 'This message appears on the home page only' message.
 
@@ -166,13 +167,13 @@ BASE_DIR / 'polls_translation' / 'choice_polls' / 'es',
 ```
 
 #### Set accordingly the LOCALE_PATHS in settings.py to allow Django to find the translations:
-...
+```
 LOCALE_PATHS = [
     ...,
     BASE_DIR / 'polls_translation' / 'choice_polls',
     ...,
 ]
-...
+```
 
 #### Remove the symlink (make sure you're in the BASE_DIR of your app where you created it)
 rm ./\<app>
@@ -186,7 +187,7 @@ rm ./choice_polls
 vim \<proj>/translations/\<app>/\<your_lang>/LC_MESSAGES/django.po.
 For our example:
 ```
-vim tutorial-site/polls_translation/choice_polls/en/LC_MESSAGES/django.po
+vim tutorial-site/polls_translation/choice_polls/es/LC_MESSAGES/django.po
 ```
 
 #### Compile messages
@@ -227,13 +228,236 @@ def welcome_translated(language):
 
 #### Django's way of inferring language
 
-1. First, Django will look for a language prefix in a URL to try to infer it's language (we already did this back in Section ***2.*** when we set our urls to use i18n_patters()). This way, if we want our site to be displayed in English we can access www.mysite.com/en/home, if we're looking to have it display another supported language like Spanish we can access it with www.mysite.com/es/home.
+1. First, Django will look for a language prefix in a URL to try to infer it's language (we already did this back in Section ***2.*** when we set our urls to use i18n_patters()). This way, if we want our site to be displayed in English we can access www.mysite.com/en/home (being 'en' the default language, we should access it with www.mysite.com/home), if we're looking to have it display another supported language like Spanish we can access it with www.mysite.com/es/home.
 2. Failing 1, it looks for a cookie (LANGUAGE_COOKIE_NAME), more details on it [here](https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#language-cookie)
 3. Failing 2, it looks at the Accept-Language HTTP header sent by the user's browser. Django tries each of the languages in this header until one matches with the supported LANGUAGES.
 4. Failing all previous options, Django will default to using the LANGUAGE_CODE specified in settings.py
 
 ### Useful links to further undestand:
-- Everything related to the language module: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
+- Everything related to the translation module: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
 - For more information on how Django gets what language it should display, visit: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#how-django-discovers-language-preference
+- https://www.marinamele.com/taskbuster-django-tutorial/internationalization-localization-languages-time-zones/
+- https://automationpanda.com/2018/04/21/django-admin-translations/
+
+### Español: Guía paso-a-paso configurar el Middleware de Traduccion de Django
+
+Para agregar un cierto idioma a la traducción predeterminada de Django, eche un vistazo a LANGUAGES en tutorial-site/settings.py. Primero que nada, necesitamos hacer una distinción entre:
+
+- Traducciones para el proyecto en cuestión
+- Traducciones para los paquetes utilizados por el proyecto
+
+Quiero llamar la atención sobre esto ya que esta guía se enfoca principalmente en el segundo tipo, ya que el primero es casi trivial y no requiere pasos adicionales. Asumiré que los paquetes requeridos por su aplicación están instalados en un entorno virtual o [ virtual-env](https://docs.python.org/3/library/venv.html), también asumiré que está utilizando un sistema operativo basado en UNIX, o al menos ejecutando algo como WSL para los comandos que usaré.
+
+#### 1. ¿Cómo elijo qué traducir?
+Bastante simple, digamos que tengo la siguiente vista/view como la página de inicio de mi sitio:
+
+```
+from django.http import HttpResponse
+
+
+def my_view(request):
+    output = ("Bienvenido a mi sitio.")
+    return HttpResponse(output)
+```
+
+Todo lo que tengo que hacer es identificar el texto que me gustaría traducir (la traducción no solo funciona en cadenas estáticas, sino también en valores calculados o variables) e importar gettext_lazy() (la mayoría de las veces debería usar esto en lugar de gettext()) para hacer la traducción, es una práctica común importar esta función con el alias '_' pero, por supuesto, no es obligatorio:
+```
+from django.http import HttpResponse
+from django.utils.translation import gettext_lazy as _
+
+
+def my_view(request):
+    output = _("Bienvenido a mi sitio.")
+    return HttpResponse(output)
+```
+
+Lo has hecho! Ahora la cadena "Bienvenido a mi sitio." ha sido marcada para traducción, pero no termina ahí.
+
+Veamos un ejemplo de utilizacion mas avanzado:
+
+```
+def my_view(request, m, d):
+    output = _("Today is %(month)s %(day)s.") % {"month": m, "day": d}
+    return HttpResponse(output)
+```
+
+Ahora digamos que quiero dejar un comentario para la persona que tenga que traducir la palabra que marque, todo lo que tenemos que hacer es:
+```
+def my_view(request):
+    # Translators: Este mensaje solo aparece en la pagina de inicio!
+    output = _("Bienvenido a mi sitio.")
+```
+Esto permitira que cualquier persona que la persona que traduzca esta string particular, pueda ver el mensaje: 'Este mensaje solo aparece en la pagina de inicio!'.
+
+Si estas intentando traducir palabras pluralidazas, [esto](https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#pluralization) deberia ser facil de entender y replicar ahora.
+
+Ahora que hemos visto cómo marcar ciertas palabras para ser traducidas, pasemos a generar dichas traducciones (ciertos componentes como la página de administración predeterminada de Django vienen con sus traducciones ya establecidas que se pueden usar simplemente cambiando el idioma de la aplicación).
+
+
+#### 2. Habilitando la traducción en mi aplicación
+Podemos comenzar creando una carpeta 'locale' en el directorio principal de su aplicación (BASE_DIR)
+
+```
+mdkir <tu_app>/locale
+```
+
+Luego, diríjase a settings.py y asegúrese de tener las siguientes configuraciones:
+```
+LANGUAGE_CODE = 'en-ar'  # este debería ser su idioma predeterminado deseado
+USE_I18N = True
+USE_L10N = True
+```
+
+Agregue el directorio 'locale' correspondiente que acaba de crear a LOCALE_PATHS en settings.py:
+```
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+```
+
+Agregue el middleware de Django en settings.py para que podamos acceder a su funcionalidad de traducción:
+```
+MIDDLEWARE = [
+    # ...
+    'django.middleware.locale.LocaleMiddleware',
+    # ...
+]
+```
+
+Mirando su archivo urls.py en su aplicación principal, debe usar la función i18n_patterns() para agregar internacionalización:
+```
+from django.conf.urls.i18n import i18n_patterns
+from django.contrib import admin
+from django.urls import path
+ 
+urlpatterns = i18n_patterns(
+    # ...
+    path('admin/', admin.site.urls),
+    # ...
+ 
+    # Si no se da un prefijo, use el idioma predeterminado
+    prefix_default_language=False   # para mas informacion mire la Sección 4 (Cambiando lenguajes)
+)
+```
+
+Diríjase a settings.py y agregue cualquier idioma (con su código de idioma asociado) que desee que su aplicación soporte en el array LANGUAGES (vea una lista de idiomas y sus códigos [aquí](https://www.w3schools.com/tags/ref_language_codes.asp)):
+```
+from django.utils.translation import gettext_lazy as _
+ 
+LANGUAGES = [
+    ('es-ar', _('Español (Argentina)')),
+    ('en', _('Inglés')),
+]
+```
+
+#### 3. Generando y traduciendo las traducciones requeridas
+#### Desde la raíz de su proyecto (BASE_DIR). Cree un enlace simbólico o symlink a la aplicación que necesita ser traducida (en nuestro caso, choice_polls)
+Esto es necesario ya que Django tiene dificultades para encontrar y procesar locales fuera del BASE_DIR, por lo que podemos sortear eso con un enlace simbólico temporal. Puede haber una solución alternativa que no haya encontrado.
+```
+ln -s ~/.../polls/choice_polls ./
+```
+
+#### Instruya a makemessages para que siga el enlace simbólico y especifique el idioma para obtener traducciones
+```
+./manage.py makemessages -s -l en
+```
+
+#### Cree una carpeta llamada "traducciones" (el nombre puede ser el que desee, uso traducciones para mayor claridad) para las traducciones de sus aplicaciones de terceros
+mkdir -p ./\<proj>/traducciones/\<app>  (excluya el proyecto si ya está en la raíz del proyecto (BASE_DIR))
+
+Para nuestro ejemplo:
+```
+mkdir -p ./polls_translation/choice_polls
+```
+
+#### Copie dentro, los archivos de traducción del directorio locale del paquete al directorio de traducciones de su proyecto
+
+BASE_DIR / 'traducciones' / '\<app>' / \<your_lang>
+
+For our example:
+```
+cp -R ./choice_polls/locale/en ./polls_translation/choice_polls/en
+```
+
+#### Resultado:
+Si \<your_lang> es "en", la carpeta resultante será:
+```
+BASE_DIR / 'polls_translation' / 'choice_polls' / 'en',
+```
+
+#### Configure adecuadamente los LOCALE_PATHS en settings.py para permitir que Django encuentre las traducciones:
+```
+LOCALE_PATHS = [
+    ...,
+    BASE_DIR / 'polls_translation' / 'choice_polls',
+    ...,
+]
+```
+
+#### Elimine el enlace simbólico (asegúrese de estar en el BASE_DIR de su aplicación donde lo creó)
+rm ./\<app>
+
+Para nuestro ejemplo:
+```
+rm ./choice_polls
+```
+
+#### Traduzca el archivo .po (use vim, nano u otro editor de texto):
+
+vim \<proj>/translations/\<app>/\<your_lang>/LC_MESSAGES/django.po.
+
+Para nuestro ejemplo:
+```
+vim tutorial-site/polls_translation/choice_polls/en/LC_MESSAGES/django.po
+```
+
+#### Compile las traducciones
+```
+./manage.py compilemessages
+```
+
+En este punto, Django indicará que se creó un archivo .mo dentro del directorio donde existe el nuevo archivo .po.
+
+¡Ahora debería estar listo y su aplicación lista para comenzar a usar las traducciones necesarias!
+
+#### 4. Cambiando idiomas
+
+#### Cambiando a través del código
+
+Veamos ahora diferentes métodos para inferir el idioma a utilizar. Ya configuramos los idiomas en los que queremos que nuestra aplicación esté disponible en LANGUAGES. Usaremos la función get_language() para obtener el idioma utilizado para un cierto hilo, el programa inferirá esto de settings.LANGUAGE_CODE. Si queremos establecer el idioma de un hilo durante la ejecución, debemos llamar a la función activate(lenguaje). Un ejemplo:
+```
+from django.utils import translation
+
+def welcome_translated(language):
+    cur_language = translation.get_language()
+    try:
+        translation.activate(language)
+        text = translation.gettext("bienvenido")
+    finally:
+        translation.activate(cur_language)
+    return text
+```
+
+Si llamamos a welcome_translated() con el parámetro 'en' y nuestro idioma predeterminado era 'es_AR', la función devolverá el texto con el valor 'welcome', la función restablece el idioma a 'es_AR' antes de finalizar la función para que el idioma del hilo no se altere. La función override() hace lo mismo pero de manera más concisa:
+```
+from django.utils import translation
+
+def welcome_translated(language):
+    with translation.override(language):
+        return translation.gettext("bienvenido")
+```
+
+#### La forma en que Django infiere el idioma
+
+1. Primero, Django buscará un prefijo de idioma en una URL para intentar inferir su idioma (ya hicimos esto en la Sección 2. cuando configuramos nuestras urls para usar i18n_patterns()). De esta manera, si queremos que nuestro sitio se muestre en inglés, podemos acceder a www.mysite.com/en/home, si queremos que se muestre en otro idioma compatible como español, podemos acceder a él con www.mysite.com/es_AR/home (al ser el idioma default el es_AR, deberiamos acceder con www.mysite.com/home).
+2. Si falla el punto 1, busca una cookie (LANGUAGE_COOKIE_NAME), más detalles sobre esto [aqui](https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#language-cookie)
+3. FSi falla el punto 2, busca en el encabezado HTTP Accept-Language enviado por el navegador del usuario. Django prueba cada uno de los idiomas en este encabezado hasta que uno coincide con los idiomas compatibles.
+4. Si fallan todas las opciones anteriores, Django usará el LANGUAGE_CODE especificado en settings.py
+
+### Enlaces útiles para entender mejor:
+- Todo lo relacionado con el módulo de traducción: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
+- Para obtener más información sobre cómo Django obtiene el idioma que debe mostrar, visite: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#how-django-discovers-language-preference
 - https://www.marinamele.com/taskbuster-django-tutorial/internationalization-localization-languages-time-zones/
 - https://automationpanda.com/2018/04/21/django-admin-translations/
