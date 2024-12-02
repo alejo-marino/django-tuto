@@ -121,6 +121,8 @@ from django.utils.translation import gettext_lazy as _
 LANGUAGES = [
     ('en', _('English')),
     ('es', _('Spanish')),
+    ('pt', _('Portuguese')),
+    ('es-mx', _('Spanish (Mexican)')),
     # Add other languages as needed
 ]
 
