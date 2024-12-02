@@ -2,7 +2,7 @@
 This is a training repository for the [8-step django tutorial](https://docs.djangoproject.com/en/5.1/intro/tutorial01/)
 To run the server make sure you're standing in the root folder of the repository and run (Look at the "Required Dependencies" before running):
 ```
-python django-tutorial/manage.py runserver
+python tutorial-site/manage.py runserver
 ```
 
 ## Required Dependencies
@@ -17,7 +17,7 @@ sudo apt-get install gettext
 
 python -m pip install Django
 python -m pip install django-debug-toolbar
-python -m pip install polls/dist/choice_polls-0.1.tar.gz
+python -m pip install polls/dist/polls-0.1.tar.gz
 ```
 
 ## Translation
@@ -118,7 +118,7 @@ urlpatterns = i18n_patterns(
     # ...
  
     # If no prefix is given, use the default language
-    prefix_default_language=False
+    prefix_default_language=False   # for more info look at section 4 (Switching languages)
 )
 ```
 
@@ -134,26 +134,29 @@ LANGUAGES = [
 
 #### 3. Generating and translating the required translations
 #### From the root of your project (BASE_DIR). Create a symlink to the application that needs to be translated (in our case, choice_polls)
+This is necessary since Django has a hard time finding and procesing locales outside of the BASE_DIR so we can circumvent that with a temporary symbolic link. There may be a workaround I haven't found.
 ```
 ln -s ~/.../polls/choice_polls ./
 ```
 
-#### Instruct makemessages to follow the symlink
-./manage.py makemessages -s  
+#### Instruct makemessages to follow the symlink and specify the language to get translations for
+```
+./manage.py makemessages -s -l es
+```
 
 #### Create a folder called "translations" (name can be whatever you please, using translations for clarity) for your third oarty applications' translations
-mkdir ./\<proj>/translations/\<app>
+mkdir -p ./\<proj>/translations/\<app>  (exclude project if you're already sitting in the project's root (BASEDIR))
 
 For our example:
 ```
-mkdir ./tutorial-site/polls_translation/choice_polls
+mkdir -p ./polls_translation/choice_polls
 ```
 
 #### Copy inside, the translation files from the package's locale directory to your project's translations directory
 BASE_DIR / 'translations' / '\<app>' / \<your_lang>
-Four our example:
+For our example:
 ```
-cp -R ./choice_polls/locale/es ./tutorial-site/polls_translation/choice_polls
+cp -R ./choice_polls/locale/es ./polls_translation/choice_polls/es
 ```
 
 #### Result:
@@ -166,7 +169,7 @@ BASE_DIR / 'polls_translation' / 'choice_polls' / 'es',
 ...
 LOCALE_PATHS = [
     ...,
-    BASE_DIR / 'polls_translation' / 'choice_polls' / 'es',
+    BASE_DIR / 'polls_translation' / 'choice_polls',
     ...,
 ]
 ...
@@ -176,14 +179,14 @@ rm ./\<app>
 
 For our example:
 ```
-rm ./choice-polls
+rm ./choice_polls
 ```
 
 #### Translate the .po file (use vim, nano, or any other text editor):
 vim \<proj>/translations/\<app>/\<your_lang>/LC_MESSAGES/django.po.
 For our example:
 ```
-vim tutorial-site/polls_translation/choice-polls/en/LC_MESSAGES/django.po
+vim tutorial-site/polls_translation/choice_polls/en/LC_MESSAGES/django.po
 ```
 
 #### Compile messages
@@ -193,10 +196,44 @@ vim tutorial-site/polls_translation/choice-polls/en/LC_MESSAGES/django.po
 
 At this point django will message that a .mo file was created inside the directory where the new .po file exists.
 
+You should now be good to go and your app ready to start using the necessary translations!
 
+#### 4. Switching languages
 
+#### Switching through code
+Let's now look at different methods of infering the language to be used. We already set the languages we want our app to be available in LANGUAGES. We'll use the get_language() function to obtain the language used for a certain thread, the program will infer this from settings.LANGUAGE_CODE. If we want to set a thread's language during execution, we should call the activate(language) function. An example:
+```
+from django.utils import translation
 
-#### Useful links to further undestand:
+def welcome_translated(language):
+    cur_language = translation.get_language()
+    try:
+        translation.activate(language)
+        text = translation.gettext("welcome")
+    finally:
+        translation.activate(cur_language)
+    return text
+```
+
+If we called welcome_translated() with the 'es' parameter and our default language was 'en', the function will return text with the value 'bienvenido', the function sets the language back to 'en' before finalizing the function so that the thread's language won't be altered. 
+The override() function does the same thing but more concisely:
+```
+from django.utils import translation
+
+def welcome_translated(language):
+    with translation.override(language):
+        return translation.gettext("welcome")
+```
+
+#### Django's way of inferring language
+
+1. First, Django will look for a language prefix in a URL to try to infer it's language (we already did this back in Section ***2.*** when we set our urls to use i18n_patters()). This way, if we want our site to be displayed in English we can access www.mysite.com/en/home, if we're looking to have it display another supported language like Spanish we can access it with www.mysite.com/es/home.
+2. Failing 1, it looks for a cookie (LANGUAGE_COOKIE_NAME), more details on it [here](https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#language-cookie)
+3. Failing 2, it looks at the Accept-Language HTTP header sent by the user's browser. Django tries each of the languages in this header until one matches with the supported LANGUAGES.
+4. Failing all previous options, Django will default to using the LANGUAGE_CODE specified in settings.py
+
+### Useful links to further undestand:
+- Everything related to the language module: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/
+- For more information on how Django gets what language it should display, visit: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#how-django-discovers-language-preference
 - https://www.marinamele.com/taskbuster-django-tutorial/internationalization-localization-languages-time-zones/
 - https://automationpanda.com/2018/04/21/django-admin-translations/
-- For more information on how Django gets what language it should display, visit: https://docs.djangoproject.com/en/5.1/topics/i18n/translation/#how-django-discovers-language-preference
